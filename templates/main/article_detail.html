@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} - AI趋势雷达{% endblock %}
+
+{% block extra_css %}
+    /* ── Article Header ─────────────────────────────────────── */
+    .article-header {
+        background: var(--color-card);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--color-border);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    .article-header h1 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--color-primary);
+        line-height: 1.4;
+        margin-bottom: 1rem;
+    }
+    .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.88rem;
+        color: var(--color-text-muted);
+    }
+    .meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .meta-item .bi {
+        font-size: 1rem;
+        color: var(--color-accent);
+    }
+    .source-badge-lg {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: rgba(59, 130, 246, 0.08);
+        color: var(--color-accent);
+        padding: 0.3rem 0.8rem;
+        border-radius: 50px;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+    .tag-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.7rem;
+        border-radius: 50px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--color-gold);
+        border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    /* ── Article Content ────────────────────────────────────── */
+    .article-body {
+        background: var(--color-card);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--color-border);
+        padding: 2rem;
+    }
+    .article-body .content-area {
+        font-size: 1rem;
+        line-height: 1.85;
+        color: var(--color-text);
+    }
+    .article-body .content-area p {
+        margin-bottom: 1.2rem;
+    }
+    .article-body .content-area h2,
+    .article-body .content-area h3,
+    .article-body .content-area h4 {
+        color: var(--color-primary);
+        font-weight: 700;
+        margin-top: 1.8rem;
+        margin-bottom: 0.8rem;
+    }
+    .article-body .content-area a {
+        color: var(--color-accent);
+        text-decoration: underline;
+        text-decoration-color: rgba(59, 130, 246, 0.3);
+        text-underline-offset: 3px;
+    }
+    .article-body .content-area a:hover {
+        color: var(--color-accent-dark);
+        text-decoration-color: var(--color-accent);
+    }
+    .article-body .content-area img {
+        max-width: 100%;
+        border-radius: var(--radius-sm);
+        margin: 1rem 0;
+    }
+    .article-body .content-area blockquote {
+        border-left: 4px solid var(--color-accent);
+        padding: 0.75rem 1.25rem;
+        margin: 1.5rem 0;
+        background: rgba(59, 130, 246, 0.04);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        color: var(--color-text-muted);
+        font-style: italic;
+    }
+    .article-body .content-area code {
+        background: rgba(15, 23, 42, 0.06);
+        padding: 0.15rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.9em;
+        color: var(--color-primary-light);
+    }
+    .article-body .content-area pre {
+        background: var(--color-primary);
+        color: #E2E8F0;
+        padding: 1.25rem;
+        border-radius: var(--radius-sm);
+        overflow-x: auto;
+        margin: 1.5rem 0;
+    }
+    .article-body .content-area pre code {
+        background: none;
+        color: inherit;
+        padding: 0;
+    }
+    .article-body .content-area ul,
+    .article-body .content-area ol {
+        padding-left: 1.5rem;
+        margin-bottom: 1.2rem;
+    }
+    .article-body .content-area li {
+        margin-bottom: 0.4rem;
+    }
+
+    /* ── Action Bar ─────────────────────────────────────────── */
+    .action-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--color-border);
+    }
+
+    /* ── Summary fallback ───────────────────────────────────── */
+    .summary-box {
+        background: rgba(59, 130, 246, 0.04);
+        border-left: 4px solid var(--color-accent);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        padding: 1.25rem 1.5rem;
+        font-size: 0.95rem;
+        line-height: 1.8;
+        color: var(--color-text);
+    }
+{% endblock %}
+
+{% block content %}
+    <!-- ── Back Navigation ─────────────────────────────────────────── -->
+    <div class="mb-3">
+        <a href="/articles{% if request.args.get('page') %}?page={{ request.args.get('page') }}{% endif %}"
+           class="btn btn-sm btn-outline-accent">
+            <i class="bi bi-arrow-left me-1"></i>返回资讯列表
+        </a>
+    </div>
+
+    <!-- ── Article Header ──────────────────────────────────────────── -->
+    <div class="article-header">
+        <h1>{{ article.title }}</h1>
+        <div class="meta-row">
+            {% if article.authority %}
+            <span class="source-badge-lg">
+                <i class="bi bi-check-circle-fill"></i>
+                {{ article.authority }}
+            </span>
+            {% endif %}
+
+            {% if article.pub_date %}
+            <span class="meta-item">
+                <i class="bi bi-calendar3"></i>
+                {{ article.pub_date.strftime('%Y年%m月%d日') if article.pub_date.strftime is defined else article.pub_date }}
+            </span>
+            {% endif %}
+
+            {% if article.category_name %}
+            <span class="badge badge-accent rounded-pill" style="font-size:0.82rem;">
+                {{ article.category_name }}
+            </span>
+            {% endif %}
+        </div>
+
+        {# Tags #}
+        {% if article.tags %}
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            {% for tag in article.tags.split(',') if article.tags is string %}
+                {% if tag.strip() %}
+                <span class="tag-pill">
+                    <i class="bi bi-hash"></i>{{ tag.strip() }}
+                </span>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── Article Body ────────────────────────────────────────────── -->
+    <div class="article-body">
+        {% if article.content %}
+        <div class="content-area">
+            {{ article.content | safe }}
+        </div>
+        {% elif article.summary %}
+        <div class="summary-box">
+            {{ article.summary }}
+        </div>
+        <p class="text-muted-custom small mt-3 mb-0">
+            <i class="bi bi-info-circle me-1"></i>
+            仅显示摘要信息，完整内容请访问原文。
+        </p>
+        {% else %}
+        <div class="text-center py-4 text-muted-custom">
+            <i class="bi bi-file-earmark-text" style="font-size:2.5rem;"></i>
+            <p class="mt-2 mb-0">暂无内容</p>
+        </div>
+        {% endif %}
+
+        <!-- ── Actions ─────────────────────────────────────────────── -->
+        <div class="action-bar">
+            {% if article.url %}
+            <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer"
+               class="btn btn-accent">
+                <i class="bi bi-box-arrow-up-right me-1"></i>查看原文
+            </a>
+            {% endif %}
+            <a href="/articles" class="btn btn-outline-accent">
+                <i class="bi bi-list-ul me-1"></i>资讯列表
+            </a>
+        </div>
+    </div>
+{% endblock %}

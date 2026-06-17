@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}资讯列表 - AI趋势雷达{% endblock %}
+
+{% block extra_css %}
+    /* ── Search Bar ─────────────────────────────────────────── */
+    .search-bar {
+        background: var(--color-card);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--color-border);
+    }
+    .search-bar .form-control {
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--color-border);
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .search-bar .form-control:focus {
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    /* ── Filter Pills ───────────────────────────────────────── */
+    .filter-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .filter-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.9rem;
+        border-radius: 50px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1.5px solid var(--color-border);
+        color: var(--color-text-muted);
+        background: var(--color-card);
+    }
+    .filter-pill:hover {
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+        background: rgba(59, 130, 246, 0.05);
+    }
+    .filter-pill.active {
+        background: var(--color-accent);
+        color: #fff;
+        border-color: var(--color-accent);
+    }
+
+    /* ── Source Select ───────────────────────────────────────── */
+    .source-select {
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--color-border);
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+        color: var(--color-text);
+        background: var(--color-card);
+        transition: border-color 0.2s ease;
+        min-width: 160px;
+    }
+    .source-select:focus {
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        outline: none;
+    }
+
+    /* ── Article Cards ──────────────────────────────────────── */
+    .article-card {
+        background: var(--color-card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        padding: 1.25rem;
+        transition: all 0.25s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--color-border);
+    }
+    .article-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-3px);
+        border-color: var(--color-accent);
+    }
+    .article-card .article-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        text-decoration: none;
+        line-height: 1.5;
+        margin-bottom: 0.5rem;
+    }
+    .article-card .article-title:hover {
+        color: var(--color-accent);
+    }
+    .article-card .article-summary {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        line-height: 1.6;
+        flex-grow: 1;
+    }
+    .article-card .article-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--color-border);
+    }
+    .source-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        background: rgba(59, 130, 246, 0.08);
+        color: var(--color-accent);
+        padding: 0.2rem 0.6rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* ── Pagination ─────────────────────────────────────────── */
+    .pagination-custom .page-link {
+        border: 1.5px solid var(--color-border);
+        color: var(--color-text);
+        font-weight: 500;
+        font-size: 0.88rem;
+        padding: 0.45rem 0.85rem;
+        border-radius: var(--radius-sm) !important;
+        margin: 0 2px;
+        transition: all 0.2s ease;
+    }
+    .pagination-custom .page-link:hover {
+        background: rgba(59, 130, 246, 0.08);
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+    }
+    .pagination-custom .page-item.active .page-link {
+        background: var(--color-accent);
+        border-color: var(--color-accent);
+        color: #fff;
+    }
+    .pagination-custom .page-item.disabled .page-link {
+        color: var(--color-text-muted);
+        opacity: 0.5;
+    }
+
+    /* ── Results Count ──────────────────────────────────────── */
+    .results-info {
+        font-size: 0.88rem;
+        color: var(--color-text-muted);
+    }
+    .results-info strong {
+        color: var(--color-accent);
+    }
+{% endblock %}
+
+{% block content %}
+    <!-- ── Search & Filters ────────────────────────────────────────── -->
+    <div class="search-bar mb-4">
+        <form method="GET" action="/articles" class="row g-2 align-items-end">
+            <div class="col-12 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0" style="border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-color: var(--color-border);">
+                        <i class="bi bi-search text-muted-custom"></i>
+                    </span>
+                    <input type="text" name="q" class="form-control border-start-0"
+                           placeholder="搜索资讯标题或关键词..."
+                           value="{{ request.args.get('q', '') }}"
+                           style="border-radius: 0 var(--radius-sm) var(--radius-sm) 0;">
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <select name="source" class="form-select source-select w-100">
+                    <option value="">全部来源</option>
+                    {% for source in sources %}
+                        <option value="{{ source.id }}"
+                            {% if request.args.get('source')|string == source.id|string %}selected{% endif %}>
+                            {{ source.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <button type="submit" class="btn btn-accent w-100">
+                    <i class="bi bi-search me-1"></i>搜索
+                </button>
+            </div>
+            {# preserve category filter when searching #}
+            {% if request.args.get('category') %}
+                <input type="hidden" name="category" value="{{ request.args.get('category') }}">
+            {% endif %}
+        </form>
+
+        <!-- Category filter pills -->
+        <div class="filter-pills mt-3 pt-3" style="border-top: 1px solid var(--color-border);">
+            <a href="/articles{% if request.args.get('q') %}?q={{ request.args.get('q') }}{% endif %}"
+               class="filter-pill {% if not request.args.get('category') %}active{% endif %}">
+                <i class="bi bi-grid me-1"></i>全部
+            </a>
+            {% for cat in categories %}
+                <a href="/articles?category={{ cat }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}"
+                   class="filter-pill {% if request.args.get('category') == cat %}active{% endif %}">
+                    {{ cat }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ── Results Info ─────────────────────────────────────────────── -->
+    {% if request.args.get('q') or request.args.get('category') %}
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="results-info">
+            {% if request.args.get('q') %}
+                搜索 "<strong>{{ request.args.get('q') }}</strong>" 的结果
+            {% endif %}
+            {% if request.args.get('category') %}
+                &middot; 分类: <strong>{{ request.args.get('category') }}</strong>
+            {% endif %}
+        </div>
+        <a href="/articles" class="btn btn-sm btn-outline-accent">
+            <i class="bi bi-x-circle me-1"></i>清除筛选
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- ── Article Grid ─────────────────────────────────────────────── -->
+    <div class="row g-3 mb-4">
+        {% for article in pagination.items %}
+        <div class="col-md-6">
+            <div class="article-card">
+                <a href="/articles/{{ article.id }}" class="article-title">
+                    {{ article.title }}
+                </a>
+                {% if article.summary %}
+                <p class="article-summary truncate-3 mb-0">
+                    {{ article.summary }}
+                </p>
+                {% endif %}
+                <div class="article-meta">
+                    {% if article.category_name %}
+                    <span class="badge badge-accent rounded-pill">{{ article.category_name }}</span>
+                    {% endif %}
+                    {% if article.authority %}
+                    <span class="source-badge">
+                        <i class="bi bi-check-circle-fill"></i>
+                        {{ article.authority }}
+                    </span>
+                    {% endif %}
+                    {% if article.pub_date %}
+                    <span class="ms-auto">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        {{ article.pub_date.strftime('%Y-%m-%d') if article.pub_date.strftime is defined else article.pub_date }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="text-center py-5 text-muted-custom">
+                <i class="bi bi-search" style="font-size:3rem;"></i>
+                <p class="mt-2 mb-0">未找到匹配的资讯</p>
+                <a href="/articles" class="btn btn-outline-accent mt-3">
+                    <i class="bi bi-arrow-left me-1"></i>返回全部资讯
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ── Pagination ───────────────────────────────────────────────── -->
+    {% if pagination and pagination.pages > 1 %}
+    <nav aria-label="资讯分页" class="d-flex justify-content-center">
+        <ul class="pagination pagination-custom mb-0">
+            {# Previous #}
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link"
+                   href="{% if pagination.has_prev %}/articles?page={{ pagination.page - 1 }}{% for k,v in request.args.items() if k != 'page' %}&{{ k }}={{ v }}{% endfor %}{% else %}#{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+
+            {# Page numbers #}
+            {% for p in range(1, pagination.pages + 1) %}
+                {% if p == pagination.page %}
+                    <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                {% elif p <= 3 or p > pagination.pages - 3 or (p >= pagination.page - 2 and p <= pagination.page + 2) %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="/articles?page={{ p }}{% for k,v in request.args.items() if k != 'page' %}&{{ k }}={{ v }}{% endfor %}">
+                            {{ p }}
+                        </a>
+                    </li>
+                {% elif p == 4 or p == pagination.pages - 3 %}
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {# Next #}
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link"
+                   href="{% if pagination.has_next %}/articles?page={{ pagination.page + 1 }}{% for k,v in request.args.items() if k != 'page' %}&{{ k }}={{ v }}{% endfor %}{% else %}#{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+{% endblock %}

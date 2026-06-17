@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI趋势雷达 - 管理后台登录</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #0F172A;
+            --navy-light: #1E293B;
+            --navy-lighter: #334155;
+            --accent: #3B82F6;
+            --accent-hover: #2563EB;
+            --gold: #F59E0B;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: var(--navy);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #0F172A 100%);
+        }
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+            padding: 0 1rem;
+        }
+        .login-brand {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-brand .icon-wrap {
+            width: 64px; height: 64px;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, var(--accent), #6366F1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #fff;
+            margin-bottom: .75rem;
+            box-shadow: 0 8px 24px rgba(59,130,246,.35);
+        }
+        .login-brand h1 {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .login-brand p {
+            color: #64748B;
+            font-size: .875rem;
+            margin: .25rem 0 0;
+        }
+        .login-card {
+            background: var(--navy-light);
+            border: 1px solid var(--navy-lighter);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,.4);
+        }
+        .login-card label {
+            color: #CBD5E1;
+            font-size: .8rem;
+            font-weight: 600;
+            margin-bottom: .35rem;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+        .login-card .form-control {
+            background: var(--navy);
+            border: 1px solid var(--navy-lighter);
+            color: #F1F5F9;
+            border-radius: .5rem;
+            padding: .65rem .9rem;
+            font-size: .9rem;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .login-card .form-control::placeholder { color: #475569; }
+        .login-card .form-control:focus {
+            background: var(--navy);
+            border-color: var(--accent);
+            color: #F1F5F9;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.2);
+        }
+        .login-card .input-group-text {
+            background: var(--navy);
+            border: 1px solid var(--navy-lighter);
+            color: #64748B;
+            border-radius: .5rem 0 0 .5rem;
+        }
+        .btn-login {
+            background: linear-gradient(135deg, var(--accent), #6366F1);
+            color: #fff;
+            border: none;
+            border-radius: .5rem;
+            padding: .7rem;
+            font-size: .95rem;
+            font-weight: 600;
+            width: 100%;
+            transition: transform .1s, box-shadow .15s;
+            box-shadow: 0 4px 14px rgba(59,130,246,.4);
+        }
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(59,130,246,.5);
+            color: #fff;
+        }
+        .btn-login:active { transform: translateY(0); }
+        .alert-login {
+            background: rgba(239,68,68,.12);
+            border: 1px solid rgba(239,68,68,.3);
+            color: #FCA5A5;
+            border-radius: .5rem;
+            padding: .6rem .9rem;
+            font-size: .85rem;
+            margin-bottom: 1.25rem;
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #475569;
+            font-size: .8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-brand">
+            <div class="icon-wrap">
+                <i class="bi bi-broadcast-pin"></i>
+            </div>
+            <h1>AI趋势雷达</h1>
+            <p>管理后台</p>
+        </div>
+
+        <div class="login-card">
+            {% if error %}
+            <div class="alert-login d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="">
+                <div class="mb-3">
+                    <label for="username">用户名</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control" id="username" name="username"
+                               placeholder="请输入用户名" required autofocus>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="password">密码</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="password" name="password"
+                               placeholder="请输入密码" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-login">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> 登 录
+                </button>
+            </form>
+        </div>
+
+        <div class="login-footer">
+            &copy; 2025 AI趋势雷达 &middot; 仅限管理员访问
+        </div>
+    </div>
+</body>
+</html>

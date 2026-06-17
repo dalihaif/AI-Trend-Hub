@@ -1,0 +1,254 @@
+{% extends "admin_base.html" %}
+{% block title %}数据源管理{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="text-navy fw-bold mb-1">数据源管理</h4>
+        <p class="text-muted mb-0" style="font-size:.875rem;">管理所有监控数据源</p>
+    </div>
+    <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#sourceModal" onclick="openAddModal()">
+        <i class="bi bi-plus-lg me-1"></i> 添加数据源
+    </button>
+</div>
+
+<!-- Sources Table -->
+<div class="admin-table">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width:40px;">#</th>
+                    <th>名称</th>
+                    <th>URL</th>
+                    <th>分类</th>
+                    <th>状态</th>
+                    <th>最近抓取</th>
+                    <th>抓取结果</th>
+                    <th>文章数</th>
+                    <th style="width:180px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for src in sources %}
+                <tr id="row-{{ src.id }}">
+                    <td class="text-muted">{{ src.id }}</td>
+                    <td>
+                        <span class="fw-semibold text-navy">{{ src.name }}</span>
+                        <br><small class="text-muted">{{ src.source_type }} / {{ src.crawl_method }}</small>
+                    </td>
+                    <td>
+                        <a href="{{ src.url }}" target="_blank" class="text-decoration-none" style="font-size:.8rem;max-width:220px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;">
+                            {{ src.url }}
+                        </a>
+                    </td>
+                    <td><span class="badge badge-category">{{ src.category or '-' }}</span></td>
+                    <td>
+                        {% if src.enabled %}
+                            <span class="badge badge-success-soft"><i class="bi bi-check-circle me-1"></i>启用</span>
+                        {% else %}
+                            <span class="badge badge-danger-soft"><i class="bi bi-x-circle me-1"></i>停用</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small class="text-muted">
+                            {% if src.last_crawl_at %}
+                                {{ src.last_crawl_at.strftime('%m-%d %H:%M') }}
+                            {% else %}
+                                从未
+                            {% endif %}
+                        </small>
+                    </td>
+                    <td>
+                        {% if src.last_crawl_status == 'success' %}
+                            <span class="badge badge-success-soft">成功</span>
+                        {% elif src.last_crawl_status == 'error' %}
+                            <span class="badge badge-danger-soft">失败</span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="fw-semibold text-navy">{{ src.policies.count() }}</span></td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-accent" onclick="crawlSource({{ src.id }}, this)" title="立即抓取">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="editSource({{ src.id }}, '{{ src.name|e }}', '{{ src.url|e }}', '{{ src.source_type }}', '{{ src.category|e }}', '{{ src.crawl_method }}', `{{ src.selectors|e }}`, {{ src.enabled|tojson }})" title="编辑">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteSource({{ src.id }})" title="删除">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">暂无数据源，点击右上角添加</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Source Modal -->
+<div class="modal fade" id="sourceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold" id="sourceModalTitle">
+                    <i class="bi bi-plus-circle me-2"></i>添加数据源
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="srcId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">名称 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="srcName" placeholder="数据源名称">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">URL <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="srcUrl" placeholder="https://example.com">
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">类型</label>
+                        <select class="form-select" id="srcType">
+                            <option value="web">Web 网页</option>
+                            <option value="rss">RSS 订阅</option>
+                            <option value="api">API 接口</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">抓取方式</label>
+                        <select class="form-select" id="srcCrawl">
+                            <option value="get">GET 请求</option>
+                            <option value="fetch">Fetch</option>
+                            <option value="stealthy">Stealthy 隐匿</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">分类</label>
+                    <input type="text" class="form-control" id="srcCategory" placeholder="例如：AI新闻">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">CSS 选择器 (JSON)</label>
+                    <textarea class="form-control" id="srcSelectors" rows="4" placeholder='{"title": "h1.title", "link": "a.readmore"}'></textarea>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="srcEnabled" checked>
+                    <label class="form-check-label" for="srcEnabled" style="font-size:.85rem;">启用该数据源</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-accent btn-sm" onclick="saveSource()">
+                    <i class="bi bi-check-lg me-1"></i>保存
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const modal = new bootstrap.Modal(document.getElementById('sourceModal'));
+
+function openAddModal() {
+    document.getElementById('sourceModalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>添加数据源';
+    document.getElementById('srcId').value = '';
+    document.getElementById('srcName').value = '';
+    document.getElementById('srcUrl').value = '';
+    document.getElementById('srcType').value = 'web';
+    document.getElementById('srcCrawl').value = 'get';
+    document.getElementById('srcCategory').value = '';
+    document.getElementById('srcSelectors').value = '';
+    document.getElementById('srcEnabled').checked = true;
+}
+
+function editSource(id, name, url, type, category, crawl, selectors, enabled) {
+    document.getElementById('sourceModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>编辑数据源';
+    document.getElementById('srcId').value = id;
+    document.getElementById('srcName').value = name;
+    document.getElementById('srcUrl').value = url;
+    document.getElementById('srcType').value = type;
+    document.getElementById('srcCrawl').value = crawl;
+    document.getElementById('srcCategory').value = category;
+    document.getElementById('srcSelectors').value = selectors;
+    document.getElementById('srcEnabled').checked = enabled;
+    modal.show();
+}
+
+function saveSource() {
+    const id = document.getElementById('srcId').value;
+    const payload = {
+        name: document.getElementById('srcName').value,
+        url: document.getElementById('srcUrl').value,
+        source_type: document.getElementById('srcType').value,
+        crawl_method: document.getElementById('srcCrawl').value,
+        category: document.getElementById('srcCategory').value,
+        selectors: document.getElementById('srcSelectors').value,
+        enabled: document.getElementById('srcEnabled').checked,
+    };
+    const isEdit = id !== '';
+    const url = isEdit ? '/admin/api/sources/' + id : '/admin/api/sources';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            modal.hide();
+            location.reload();
+        } else {
+            alert('保存失败');
+        }
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+
+function deleteSource(id) {
+    if (!confirm('确定删除该数据源？相关不会被删除。')) return;
+    fetch('/admin/api/sources/' + id, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('row-' + id).remove();
+            } else {
+                alert('删除失败');
+            }
+        })
+        .catch(err => alert('请求异常: ' + err.message));
+}
+
+function crawlSource(id, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    fetch('/admin/api/sources/' + id + '/crawl', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('抓取完成！新增 ' + data.new_count + ' 篇');
+                location.reload();
+            } else {
+                alert('抓取失败');
+            }
+        })
+        .catch(err => alert('请求异常: ' + err.message))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-repeat"></i>';
+        });
+}
+</script>
+{% endblock %}

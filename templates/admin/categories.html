@@ -1,0 +1,242 @@
+{% extends "admin_base.html" %}
+{% block title %}分类管理{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="text-navy fw-bold mb-1">分类管理</h4>
+        <p class="text-muted mb-0" style="font-size:.875rem;">管理知识库分类体系（支持二级分类）</p>
+    </div>
+    <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#catModal" onclick="openAddModal()">
+        <i class="bi bi-plus-lg me-1"></i> 添加分类
+    </button>
+</div>
+
+<!-- Categories Table -->
+<div class="admin-table">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width:50px;">ID</th>
+                    <th>图标</th>
+                    <th>分类名称</th>
+                    <th>排序</th>
+                    <th>描述</th>
+                    <th>子分类</th>
+                    <th style="width:130px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <!-- Parent Category -->
+                <tr id="cat-{{ cat.id }}">
+                    <td class="text-muted" style="font-size:.8rem;">{{ cat.id }}</td>
+                    <td>
+                        {% if cat.icon %}
+                            <i class="bi {{ cat.icon }} text-accent" style="font-size:1.15rem;"></i>
+                        {% else %}
+                            <i class="bi bi-folder text-muted" style="font-size:1.15rem;"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="fw-semibold text-navy">{{ cat.name }}</span>
+                    </td>
+                    <td><span class="badge bg-light text-dark">{{ cat.sort_order }}</span></td>
+                    <td style="font-size:.8rem;max-width:300px;">
+                        <span class="text-muted">{{ cat.description or '-' }}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark">{{ cat.children|length }}</span>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-accent" onclick="addChild({{ cat.id }}, '{{ cat.name|e }}')" title="添加子分类">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="editCategory({{ cat.id }}, '{{ cat.name|e }}', '{{ cat.icon }}', {{ cat.sort_order }}, '{{ cat.description|e }}', {{ cat.parent_id or 'null' }})" title="编辑">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteCategory({{ cat.id }})" title="删除">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <!-- Child Categories (indented) -->
+                {% for child in cat.children|sort(attribute='sort_order') %}
+                <tr id="cat-{{ child.id }}">
+                    <td class="text-muted" style="font-size:.8rem;">{{ child.id }}</td>
+                    <td>
+                        {% if child.icon %}
+                            <i class="bi {{ child.icon }} text-accent" style="font-size:1rem;"></i>
+                        {% else %}
+                            <i class="bi bi-folder text-muted" style="font-size:1rem;"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="text-muted me-2" style="font-size:.85rem;">
+                            <i class="bi bi-arrow-return-right"></i>
+                        </span>
+                        <span class="text-navy">{{ child.name }}</span>
+                    </td>
+                    <td><span class="badge bg-light text-dark">{{ child.sort_order }}</span></td>
+                    <td style="font-size:.8rem;max-width:300px;">
+                        <span class="text-muted">{{ child.description or '-' }}</span>
+                    </td>
+                    <td></td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary" onclick="editCategory({{ child.id }}, '{{ child.name|e }}', '{{ child.icon }}', {{ child.sort_order }}, '{{ child.description|e }}', {{ child.parent_id }})" title="编辑">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteCategory({{ child.id }})" title="删除">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">暂无分类，点击右上角添加</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Category Modal -->
+<div class="modal fade" id="catModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold" id="catModalTitle">
+                    <i class="bi bi-plus-circle me-2"></i>添加分类
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="catId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">分类名称 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="catName" placeholder="分类名称">
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">图标 (Bootstrap Icon 类名)</label>
+                        <input type="text" class="form-control" id="catIcon" placeholder="bi-star">
+                        <small class="text-muted">例如: bi-cpu, bi-robot</small>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">排序</label>
+                        <input type="number" class="form-control" id="catSort" value="0">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">上级分类 ID（留空为顶级）</label>
+                    <input type="number" class="form-control" id="catParent" placeholder="留空表示顶级分类">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">描述</label>
+                    <textarea class="form-control" id="catDesc" rows="3" placeholder="分类描述"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-accent btn-sm" onclick="saveCategory()">
+                    <i class="bi bi-check-lg me-1"></i>保存
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const catModal = new bootstrap.Modal(document.getElementById('catModal'));
+
+function openAddModal() {
+    document.getElementById('catModalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>添加分类';
+    document.getElementById('catId').value = '';
+    document.getElementById('catName').value = '';
+    document.getElementById('catIcon').value = '';
+    document.getElementById('catSort').value = '0';
+    document.getElementById('catParent').value = '';
+    document.getElementById('catDesc').value = '';
+}
+
+function addChild(parentId, parentName) {
+    document.getElementById('catModalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>添加子分类 (' + parentName + ')';
+    document.getElementById('catId').value = '';
+    document.getElementById('catName').value = '';
+    document.getElementById('catIcon').value = '';
+    document.getElementById('catSort').value = '0';
+    document.getElementById('catParent').value = parentId;
+    document.getElementById('catDesc').value = '';
+    catModal.show();
+}
+
+function editCategory(id, name, icon, sort, desc, parentId) {
+    document.getElementById('catModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>编辑分类';
+    document.getElementById('catId').value = id;
+    document.getElementById('catName').value = name;
+    document.getElementById('catIcon').value = icon || '';
+    document.getElementById('catSort').value = sort;
+    document.getElementById('catParent').value = parentId || '';
+    document.getElementById('catDesc').value = desc || '';
+    catModal.show();
+}
+
+function saveCategory() {
+    const id = document.getElementById('catId').value;
+    const parentVal = document.getElementById('catParent').value;
+    const payload = {
+        name: document.getElementById('catName').value,
+        icon: document.getElementById('catIcon').value,
+        sort_order: parseInt(document.getElementById('catSort').value) || 0,
+        description: document.getElementById('catDesc').value,
+        parent_id: parentVal ? parseInt(parentVal) : null,
+    };
+
+    if (!payload.name) return alert('请输入分类名称');
+
+    const isEdit = id !== '';
+    const url = isEdit ? '/admin/api/categories/' + id : '/admin/api/categories';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            catModal.hide();
+            location.reload();
+        } else {
+            alert('保存失败');
+        }
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+
+function deleteCategory(id) {
+    if (!confirm('确定删除该分类？子分类也会一并删除。')) return;
+    fetch('/admin/api/categories/' + id, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('cat-' + id).remove();
+            } else {
+                alert('删除失败');
+            }
+        })
+        .catch(err => alert('请求异常: ' + err.message));
+}
+</script>
+{% endblock %}

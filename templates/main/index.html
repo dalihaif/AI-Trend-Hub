@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}AI趋势雷达 - 首页{% endblock %}
+
+{% block extra_css %}
+    /* ── Stat Cards ─────────────────────────────────────────── */
+    .stat-card {
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        min-height: 130px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+    .stat-card .stat-icon {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        font-size: 5rem;
+        opacity: 0.12;
+        line-height: 1;
+    }
+    .stat-card .stat-value {
+        font-size: 2.2rem;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+    .stat-card .stat-label {
+        font-size: 0.88rem;
+        opacity: 0.85;
+        font-weight: 500;
+        margin-top: 0.25rem;
+    }
+    .stat-card .stat-footer {
+        font-size: 0.78rem;
+        opacity: 0.65;
+        margin-top: 0.5rem;
+    }
+    .stat-gradient-1 { background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); }
+    .stat-gradient-2 { background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); }
+    .stat-gradient-3 { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+    .stat-gradient-4 { background: linear-gradient(135deg, #10B981 0%, #059669 100%); }
+
+    /* ── Category Badges ────────────────────────────────────── */
+    .category-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 1rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1.5px solid var(--color-border);
+        color: var(--color-text);
+        background: var(--color-card);
+    }
+    .category-pill:hover {
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+        background: rgba(59, 130, 246, 0.06);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+    .category-pill .count {
+        background: var(--color-accent);
+        color: #fff;
+        font-size: 0.72rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        min-width: 24px;
+        text-align: center;
+    }
+
+    /* ── Article Cards ──────────────────────────────────────── */
+    .article-card {
+        background: var(--color-card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        padding: 1.25rem;
+        transition: all 0.25s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--color-border);
+    }
+    .article-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-3px);
+        border-color: var(--color-accent);
+    }
+    .article-card .article-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        text-decoration: none;
+        line-height: 1.5;
+        margin-bottom: 0.6rem;
+    }
+    .article-card .article-title:hover {
+        color: var(--color-accent);
+    }
+    .article-card .article-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        margin-top: auto;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--color-border);
+    }
+    .source-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        background: rgba(59, 130, 246, 0.08);
+        color: var(--color-accent);
+        padding: 0.2rem 0.6rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .authority-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        color: var(--color-gold);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+{% endblock %}
+
+{% block content %}
+    <!-- ── Stat Cards ──────────────────────────────────────────────── -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card stat-gradient-1">
+                <i class="bi bi-newspaper stat-icon"></i>
+                <div>
+                    <div class="stat-value">{{ stats.total_articles }}</div>
+                    <div class="stat-label">总资讯数</div>
+                </div>
+                <div class="stat-footer">
+                    <i class="bi bi-database me-1"></i>全量收录
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card stat-gradient-2">
+                <i class="bi bi-rss stat-icon"></i>
+                <div>
+                    <div class="stat-value">{{ stats.total_sources }}</div>
+                    <div class="stat-label">数据源</div>
+                </div>
+                <div class="stat-footer">
+                    <i class="bi bi-globe me-1"></i>多渠道覆盖
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card stat-gradient-3">
+                <i class="bi bi-lightning-charge stat-icon"></i>
+                <div>
+                    <div class="stat-value">{{ stats.today_articles }}</div>
+                    <div class="stat-label">今日新增</div>
+                </div>
+                <div class="stat-footer">
+                    <i class="bi bi-calendar-check me-1"></i>实时更新
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card stat-gradient-4">
+                <i class="bi bi-book stat-icon"></i>
+                <div>
+                    <div class="stat-value">{{ stats.total_knowledge }}</div>
+                    <div class="stat-label">知识库</div>
+                </div>
+                <div class="stat-footer">
+                    <i class="bi bi-layers me-1"></i>深度沉淀
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Categories ──────────────────────────────────────────────── -->
+    {% if cat_counts %}
+    <div class="mb-4">
+        <div class="section-header">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+            分类浏览
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            {% for name, count in cat_counts.items() %}
+                <a href="/articles?category={{ name }}" class="category-pill">
+                    {{ name }}
+                    <span class="count">{{ count }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Recent Articles ─────────────────────────────────────────── -->
+    <div class="mb-4">
+        <div class="section-header">
+            <i class="bi bi-clock-history"></i>
+            最新资讯
+            <a href="/articles" class="ms-auto btn btn-sm btn-outline-accent">
+                查看全部 <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row g-3">
+            {% for article in recent %}
+            <div class="col-md-6 col-lg-4">
+                <div class="article-card">
+                    <a href="/articles/{{ article.id }}" class="article-title truncate-2">
+                        {{ article.title }}
+                    </a>
+                    {% if article.summary %}
+                    <p class="text-muted-custom small truncate-2 mb-0" style="font-size:0.83rem;">
+                        {{ article.summary }}
+                    </p>
+                    {% endif %}
+                    <div class="article-meta">
+                        {% if article.category_name %}
+                        <span class="badge badge-accent rounded-pill">{{ article.category_name }}</span>
+                        {% endif %}
+                        {% if article.authority %}
+                        <span class="source-badge">
+                            <i class="bi bi-check-circle-fill"></i>
+                            {{ article.authority }}
+                        </span>
+                        {% endif %}
+                        {% if article.pub_date %}
+                        <span class="ms-auto">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            {{ article.pub_date.strftime('%m-%d') if article.pub_date.strftime is defined else article.pub_date }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="text-center py-5 text-muted-custom">
+                    <i class="bi bi-inbox" style="font-size:3rem;"></i>
+                    <p class="mt-2 mb-0">暂无资讯数据</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends "admin_base.html" %}
+{% block title %}仪表盘{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="text-navy fw-bold mb-1">仪表盘</h4>
+        <p class="text-muted mb-0" style="font-size:.875rem;">系统概览与快捷操作</p>
+    </div>
+    <div>
+        <button class="btn btn-gold" id="btnCrawlAll" onclick="crawlAll()">
+            <i class="bi bi-arrow-repeat me-1"></i> 全量抓取
+        </button>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#EFF6FF;color:var(--accent);">
+                    <i class="bi bi-file-earmark-text-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.articles }}</div>
+                    <div class="stat-label">总文章数</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#FEF3C7;color:var(--gold);">
+                    <i class="bi bi-database-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.sources }}</div>
+                    <div class="stat-label">数据源</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#F0FDF4;color:#16A34A;">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.sources_active }}</div>
+                    <div class="stat-label">活跃源</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#F5F3FF;color:#7C3AED;">
+                    <i class="bi bi-journal-bookmark-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.knowledge }}</div>
+                    <div class="stat-label">知识库条目</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card">
+            <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#FFF7ED;color:#EA580C;">
+                    <i class="bi bi-calendar-plus-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ stats.today_articles }}</div>
+                    <div class="stat-label">今日新增</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-3">
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card text-center py-4">
+            <i class="bi bi-arrow-repeat mb-2 d-block" style="font-size:2rem;color:var(--gold);"></i>
+            <h6 class="fw-bold text-navy mb-2">全量抓取</h6>
+            <p class="text-muted mb-3" style="font-size:.8rem;">触发所有活跃数据源立即抓取</p>
+            <button class="btn btn-gold btn-sm px-4" onclick="crawlAll()">
+                <i class="bi bi-play-fill me-1"></i> 开始抓取
+            </button>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card text-center py-4">
+            <i class="bi bi-database mb-2 d-block" style="font-size:2rem;color:var(--accent);"></i>
+            <h6 class="fw-bold text-navy mb-2">管理数据源</h6>
+            <p class="text-muted mb-3" style="font-size:.8rem;">添加、编辑、启停数据源</p>
+            <a href="/admin/sources" class="btn btn-accent btn-sm px-4">
+                <i class="bi bi-gear me-1"></i> 进入管理
+            </a>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card text-center py-4">
+            <i class="bi bi-file-earmark-text mb-2 d-block" style="font-size:2rem;color:#7C3AED;"></i>
+            <h6 class="fw-bold text-navy mb-2">管理文章</h6>
+            <p class="text-muted mb-3" style="font-size:.8rem;">查看、分类、批量操作文章</p>
+            <a href="/admin/articles" class="btn btn-outline-accent btn-sm px-4">
+                <i class="bi bi-list-ul me-1"></i> 进入管理
+            </a>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card text-center py-4">
+            <i class="bi bi-journal-bookmark mb-2 d-block" style="font-size:2rem;color:#16A34A;"></i>
+            <h6 class="fw-bold text-navy mb-2">管理知识库</h6>
+            <p class="text-muted mb-3" style="font-size:.8rem;">知识库条目管理与维护</p>
+            <a href="/admin/knowledge" class="btn btn-outline-accent btn-sm px-4">
+                <i class="bi bi-collection me-1"></i> 进入管理
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Crawl Log -->
+<div class="mt-4">
+    <div class="stat-card">
+        <h6 class="fw-bold text-navy mb-3"><i class="bi bi-terminal me-2"></i>操作日志</h6>
+        <div id="crawlLog" style="max-height:200px;overflow-y:auto;font-family:monospace;font-size:.8rem;color:#64748B;background:#F8FAFC;border-radius:.5rem;padding:.75rem;">
+            <div class="text-muted">等待操作...</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function crawlAll() {
+    const btn = document.getElementById('btnCrawlAll');
+    const log = document.getElementById('crawlLog');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> 抓取中...';
+    log.innerHTML += '<div class="text-accent">[' + new Date().toLocaleTimeString() + '] 开始全量抓取...</div>';
+    log.scrollTop = log.scrollHeight;
+
+    fetch('/admin/api/crawl-all', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                log.innerHTML += '<div class="text-success">[' + new Date().toLocaleTimeString() + '] 抓取完成！新增 ' + data.new_count + ' 篇文章</div>';
+            } else {
+                log.innerHTML += '<div class="text-danger">[' + new Date().toLocaleTimeString() + '] 抓取失败</div>';
+            }
+        })
+        .catch(err => {
+            log.innerHTML += '<div class="text-danger">[' + new Date().toLocaleTimeString() + '] 请求异常: ' + err.message + '</div>';
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> 全量抓取';
+            log.scrollTop = log.scrollHeight;
+        });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI趋势雷达{% endblock %} - 管理后台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+    <style>
+        :root {
+            --navy: #0F172A;
+            --navy-light: #1E293B;
+            --navy-lighter: #334155;
+            --accent: #3B82F6;
+            --accent-hover: #2563EB;
+            --gold: #F59E0B;
+            --gold-hover: #D97706;
+            --surface: #F8FAFC;
+            --text-muted-custom: #94A3B8;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: var(--surface);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* ===== Top Navbar ===== */
+        .admin-topbar {
+            background: var(--navy);
+            border-bottom: 1px solid var(--navy-lighter);
+            padding: 0 1.5rem;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+        .admin-topbar .brand {
+            color: #fff;
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+        .admin-topbar .brand:hover { color: var(--accent); }
+        .admin-topbar .brand .bi { color: var(--gold); font-size: 1.3rem; }
+        .admin-topbar .top-actions a {
+            color: var(--text-muted-custom);
+            text-decoration: none;
+            font-size: .875rem;
+            margin-left: 1rem;
+            transition: color .15s;
+        }
+        .admin-topbar .top-actions a:hover { color: #fff; }
+
+        /* ===== Admin Nav Tabs ===== */
+        .admin-nav {
+            background: var(--navy-light);
+            padding: 0 1.5rem;
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--navy-lighter);
+            overflow-x: auto;
+        }
+        .admin-nav a {
+            color: var(--text-muted-custom);
+            text-decoration: none;
+            padding: .75rem 1.15rem;
+            font-size: .875rem;
+            font-weight: 500;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all .15s;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+        .admin-nav a:hover {
+            color: #fff;
+            background: rgba(255,255,255,.04);
+        }
+        .admin-nav a.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* ===== Content ===== */
+        .admin-content {
+            padding: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ===== Cards & Stats ===== */
+        .stat-card {
+            background: #fff;
+            border-radius: .75rem;
+            padding: 1.25rem 1.5rem;
+            border: 1px solid #E2E8F0;
+            transition: box-shadow .15s;
+        }
+        .stat-card:hover { box-shadow: 0 4px 12px rgba(15,23,42,.08); }
+        .stat-card .stat-icon {
+            width: 42px; height: 42px;
+            border-radius: .5rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+        }
+        .stat-card .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1.2;
+        }
+        .stat-card .stat-label {
+            font-size: .8rem;
+            color: var(--text-muted-custom);
+            font-weight: 500;
+        }
+
+        /* ===== Tables ===== */
+        .admin-table {
+            background: #fff;
+            border-radius: .75rem;
+            border: 1px solid #E2E8F0;
+            overflow: hidden;
+        }
+        .admin-table table { margin-bottom: 0; }
+        .admin-table thead th {
+            background: var(--navy);
+            color: #fff;
+            font-weight: 600;
+            font-size: .8rem;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            padding: .75rem 1rem;
+            border: none;
+            white-space: nowrap;
+        }
+        .admin-table tbody td {
+            padding: .7rem 1rem;
+            font-size: .875rem;
+            vertical-align: middle;
+            border-color: #F1F5F9;
+        }
+        .admin-table tbody tr:hover { background: #F8FAFC; }
+
+        /* ===== Buttons ===== */
+        .btn-navy {
+            background: var(--navy);
+            color: #fff;
+            border: none;
+        }
+        .btn-navy:hover { background: var(--navy-light); color: #fff; }
+        .btn-accent {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+        }
+        .btn-accent:hover { background: var(--accent-hover); color: #fff; }
+        .btn-gold {
+            background: var(--gold);
+            color: var(--navy);
+            border: none;
+            font-weight: 600;
+        }
+        .btn-gold:hover { background: var(--gold-hover); color: #fff; }
+        .btn-outline-accent {
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        .btn-outline-accent:hover { background: var(--accent); color: #fff; }
+
+        /* ===== Badges ===== */
+        .badge-category {
+            background: #EFF6FF;
+            color: var(--accent);
+            font-weight: 500;
+            font-size: .75rem;
+            padding: .35em .65em;
+        }
+        .badge-success-soft {
+            background: #F0FDF4;
+            color: #16A34A;
+        }
+        .badge-danger-soft {
+            background: #FEF2F2;
+            color: #DC2626;
+        }
+        .badge-gold-soft {
+            background: #FFFBEB;
+            color: var(--gold-hover);
+        }
+
+        /* ===== Modals ===== */
+        .modal-header {
+            background: var(--navy);
+            color: #fff;
+            border: none;
+        }
+        .modal-header .btn-close { filter: invert(1); }
+
+        /* ===== Batch Bar ===== */
+        .batch-bar {
+            background: var(--navy);
+            color: #fff;
+            padding: .6rem 1.25rem;
+            border-radius: .5rem;
+            display: none;
+            align-items: center;
+            gap: .75rem;
+            margin-bottom: 1rem;
+            font-size: .875rem;
+        }
+        .batch-bar.show { display: flex; }
+        .batch-bar .btn { font-size: .8rem; }
+
+        /* ===== Pagination ===== */
+        .page-link {
+            color: var(--accent);
+            border-color: #E2E8F0;
+        }
+        .page-item.active .page-link {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* ===== Misc ===== */
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 .2rem rgba(59,130,246,.15);
+        }
+        .text-navy { color: var(--navy) !important; }
+        .text-accent { color: var(--accent) !important; }
+        .text-gold { color: var(--gold) !important; }
+        .bg-navy { background-color: var(--navy) !important; }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="admin-topbar">
+        <a href="/admin/" class="brand">
+            <i class="bi bi-broadcast-pin"></i>
+            AI趋势雷达
+        </a>
+        <div class="top-actions">
+            <a href="/" target="_blank"><i class="bi bi-box-arrow-up-right me-1"></i>前台</a>
+            <a href="/admin/logout"><i class="bi bi-box-arrow-right me-1"></i>退出</a>
+        </div>
+    </div>
+
+    <!-- Admin Nav -->
+    <nav class="admin-nav">
+        <a href="/admin/" class="{% if request.path == '/admin/' %}active{% endif %}">
+            <i class="bi bi-speedometer2"></i> 仪表盘
+        </a>
+        <a href="/admin/sources" class="{% if '/admin/sources' in request.path %}active{% endif %}">
+            <i class="bi bi-database"></i> 数据源
+        </a>
+        <a href="/admin/articles" class="{% if '/admin/articles' in request.path %}active{% endif %}">
+            <i class="bi bi-file-earmark-text"></i> 文章管理
+        </a>
+        <a href="/admin/categories" class="{% if '/admin/categories' in request.path %}active{% endif %}">
+            <i class="bi bi-tags"></i> 分类管理
+        </a>
+        <a href="/admin/knowledge" class="{% if '/admin/knowledge' in request.path %}active{% endif %}">
+            <i class="bi bi-journal-bookmark"></i> 知识库
+        </a>
+    </nav>
+
+    <!-- Page Content -->
+    <div class="admin-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

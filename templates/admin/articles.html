@@ -1,0 +1,430 @@
+{% extends "admin_base.html" %}
+{% block title %}文章管理{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="text-navy fw-bold mb-1">文章管理</h4>
+        <p class="text-muted mb-0" style="font-size:.875rem;">
+            共 {{ pagination.total }} 篇文章
+            {% if search %} &middot; 搜索: "{{ search }}"{% endif %}
+            {% if category %} &middot; 分类: {{ category }}{% endif %}
+        </p>
+    </div>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="stat-card mb-3">
+    <form method="GET" action="/admin/articles" class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label fw-semibold" style="font-size:.8rem;">搜索标题</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" name="q" value="{{ search }}" placeholder="输入关键词搜索...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold" style="font-size:.8rem;">分类筛选</label>
+            <input type="text" class="form-control form-control-sm" name="category" value="{{ category }}" placeholder="输入分类名称...">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-accent btn-sm flex-fill">
+                <i class="bi bi-funnel me-1"></i> 筛选
+            </button>
+            <a href="/admin/articles" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Batch Action Bar -->
+<div class="batch-bar" id="batchBar">
+    <span><i class="bi bi-check2-square me-1"></i> 已选 <strong id="selectedCount">0</strong> 项</span>
+    <div class="ms-auto d-flex gap-2">
+        <button class="btn btn-sm btn-gold" data-bs-toggle="modal" data-bs-target="#batchCategoryModal">
+            <i class="bi bi-tags me-1"></i> 批量修改分类
+        </button>
+        <button class="btn btn-sm btn-outline-light" onclick="batchSuggest()">
+            <i class="bi bi-magic me-1"></i> 批量智能归类
+        </button>
+        <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#batchKnowledgeModal">
+            <i class="bi bi-journal-arrow-down me-1"></i> 批量转入知识库
+        </button>
+        <button class="btn btn-sm btn-outline-danger" onclick="batchDelete()">
+            <i class="bi bi-trash me-1"></i> 批量删除
+        </button>
+    </div>
+</div>
+
+<!-- Articles Table -->
+<div class="admin-table">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width:40px;">
+                        <input class="form-check-input" type="checkbox" id="checkAll" onchange="toggleAll(this)">
+                    </th>
+                    <th style="width:55px;">ID</th>
+                    <th>标题</th>
+                    <th>分类</th>
+                    <th>来源</th>
+                    <th>日期</th>
+                    <th style="width:60px;">阅读</th>
+                    <th style="width:100px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in pagination.items %}
+                <tr id="art-{{ a.id }}">
+                    <td>
+                        <input class="form-check-input art-check" type="checkbox" value="{{ a.id }}"
+                               onchange="updateBtns()">
+                    </td>
+                    <td class="text-muted" style="font-size:.8rem;">{{ a.id }}</td>
+                    <td>
+                        <a href="{{ a.url }}" target="_blank" class="text-decoration-none text-navy fw-semibold"
+                           style="font-size:.875rem;display:inline-block;max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;">
+                            {% if a.is_pinned %}<i class="bi bi-pin-angle-fill text-gold me-1"></i>{% endif %}
+                            {{ a.title }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if a.category_name %}
+                            <span class="badge badge-category">{{ a.category_name }}</span>
+                        {% else %}
+                            <span class="text-muted" style="font-size:.8rem;">未分类</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:.8rem;">
+                        <span class="text-muted">{{ a.authority or '-' }}</span>
+                    </td>
+                    <td style="font-size:.8rem;">
+                        <span class="text-muted">{{ a.pub_date.strftime('%Y-%m-%d') if a.pub_date else '-' }}</span>
+                    </td>
+                    <td style="font-size:.8rem;">
+                        <span class="text-muted">{{ a.view_count }}</span>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-accent" onclick="editArticle({{ a.id }})" title="编辑">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteArticle({{ a.id }})" title="删除">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">暂无文章数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<nav class="mt-3 d-flex justify-content-center">
+    <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ pagination.prev_num }}&q={{ search }}&category={{ category }}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="?page={{ p }}&q={{ search }}&category={{ category }}">{{ p }}</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ pagination.next_num }}&q={{ search }}&category={{ category }}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+<!-- Edit Article Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold"><i class="bi bi-pencil me-2"></i>编辑文章</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">标题</label>
+                    <input type="text" class="form-control" id="editTitle">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">摘要</label>
+                    <textarea class="form-control" id="editSummary" rows="4"></textarea>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">分类</label>
+                        <input type="text" class="form-control" id="editCategory">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">标签</label>
+                        <input type="text" class="form-control" id="editTags" placeholder="逗号分隔">
+                    </div>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="editPinned">
+                    <label class="form-check-label" for="editPinned" style="font-size:.85rem;">置顶</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-accent btn-sm" onclick="saveArticle()">
+                    <i class="bi bi-check-lg me-1"></i>保存
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Category Modal -->
+<div class="modal fade" id="batchCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold"><i class="bi bi-tags me-2"></i>批量修改分类</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label fw-semibold" style="font-size:.85rem;">目标分类</label>
+                <input type="text" class="form-control" id="batchCategoryName" placeholder="输入分类名称">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-accent btn-sm" onclick="batchCategory()">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch to Knowledge Modal -->
+<div class="modal fade" id="batchKnowledgeModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold"><i class="bi bi-journal-arrow-down me-2"></i>转入知识库</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label fw-semibold" style="font-size:.85rem;">目标知识库分类 ID</label>
+                <input type="number" class="form-control" id="batchKnowledgeCatId" placeholder="输入分类ID">
+                <small class="text-muted">可在分类管理页面查看分类ID</small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-accent btn-sm" onclick="batchToKnowledge()">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.art-check:checked')).map(cb => parseInt(cb.value));
+}
+
+function updateBtns() {
+    const ids = getSelectedIds();
+    const bar = document.getElementById('batchBar');
+    const cnt = document.getElementById('selectedCount');
+    cnt.textContent = ids.length;
+    if (ids.length > 0) {
+        bar.classList.add('show');
+    } else {
+        bar.classList.remove('show');
+    }
+    // sync check-all
+    const all = document.querySelectorAll('.art-check');
+    const checkAll = document.getElementById('checkAll');
+    checkAll.checked = all.length > 0 && ids.length === all.length;
+}
+
+function toggleAll(master) {
+    document.querySelectorAll('.art-check').forEach(cb => {
+        cb.checked = master.checked;
+    });
+    updateBtns();
+}
+
+// ===== Single Edit =====
+function editArticle(id) {
+    fetch('/admin/api/articles/' + id)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return alert('加载失败');
+            const item = data.item;
+            document.getElementById('editId').value = item.id;
+            document.getElementById('editTitle').value = item.title || '';
+            document.getElementById('editSummary').value = item.summary || '';
+            document.getElementById('editCategory').value = item.category_name || '';
+            document.getElementById('editTags').value = item.tags || '';
+            document.getElementById('editPinned').checked = !!item.is_pinned;
+            editModal.show();
+        })
+        .catch(err => alert('请求异常: ' + err.message));
+}
+
+function saveArticle() {
+    const id = document.getElementById('editId').value;
+    const payload = {
+        title: document.getElementById('editTitle').value,
+        summary: document.getElementById('editSummary').value,
+        category_name: document.getElementById('editCategory').value,
+        tags: document.getElementById('editTags').value,
+        is_pinned: document.getElementById('editPinned').checked,
+    };
+    fetch('/admin/api/articles/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { editModal.hide(); location.reload(); }
+        else alert('保存失败');
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+
+// ===== Single Delete =====
+function deleteArticle(id) {
+    if (!confirm('确定删除该文章？')) return;
+    fetch('/admin/api/articles/' + id, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) { document.getElementById('art-' + id).remove(); }
+            else alert('删除失败');
+        })
+        .catch(err => alert('请求异常: ' + err.message));
+}
+
+// ===== Batch: Category =====
+function batchCategory() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return alert('请先选择文章');
+    const catName = document.getElementById('batchCategoryName').value.trim();
+    if (!catName) return alert('请输入分类名称');
+
+    fetch('/admin/api/articles/batch', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids, updates: { category_name: catName } })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('已更新 ' + data.updated + ' 篇文章分类');
+            location.reload();
+        } else alert('操作失败');
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+
+// ===== Batch: Delete =====
+function batchDelete() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return alert('请先选择文章');
+    if (!confirm('确定删除选中的 ' + ids.length + ' 篇文章？')) return;
+
+    fetch('/admin/api/articles/batch-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('已删除 ' + data.deleted + ' 篇文章');
+            location.reload();
+        } else alert('操作失败');
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+
+// ===== Batch: AI Suggest =====
+function batchSuggest() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return alert('请先选择文章');
+
+    fetch('/admin/api/articles/batch-suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success && data.suggestions.length > 0) {
+            let msg = '智能归类建议:\n\n';
+            data.suggestions.forEach(s => {
+                msg += s.title.substring(0, 30) + ' → ' + s.suggested + '\n';
+            });
+            msg += '\n是否应用这些分类？';
+            if (confirm(msg)) {
+                // Apply each suggestion
+                const promises = data.suggestions.map(s =>
+                    fetch('/admin/api/articles/' + s.id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ category_name: s.suggested })
+                    }).then(r => r.json())
+                );
+                Promise.all(promises).then(() => {
+                    alert('已应用智能归类');
+                    location.reload();
+                });
+            }
+        } else {
+            alert('未获取到分类建议');
+        }
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+
+// ===== Batch: To Knowledge =====
+function batchToKnowledge() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return alert('请先选择文章');
+    const catId = document.getElementById('batchKnowledgeCatId').value;
+    if (!catId) return alert('请输入分类ID');
+
+    fetch('/admin/api/articles/batch-to-knowledge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids, category_id: parseInt(catId) })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('已转入 ' + data.transferred + ' 篇到知识库');
+            bootstrap.Modal.getInstance(document.getElementById('batchKnowledgeModal')).hide();
+        } else alert('操作失败');
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+</script>
+{% endblock %}

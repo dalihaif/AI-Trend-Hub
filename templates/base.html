@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI趋势雷达{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #0F172A;
+            --color-primary-light: #1E293B;
+            --color-primary-lighter: #334155;
+            --color-accent: #3B82F6;
+            --color-accent-light: #60A5FA;
+            --color-accent-dark: #2563EB;
+            --color-gold: #F59E0B;
+            --color-gold-light: #FBBF24;
+            --color-bg: #F1F5F9;
+            --color-card: #FFFFFF;
+            --color-text: #1E293B;
+            --color-text-muted: #64748B;
+            --color-border: #E2E8F0;
+            --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+            --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(15, 23, 42, 0.04);
+            --shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.1), 0 4px 8px rgba(15, 23, 42, 0.05);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-lg: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+                         'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Navbar ─────────────────────────────────────────── */
+        .navbar-radar {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+            border-bottom: 2px solid var(--color-accent);
+            box-shadow: var(--shadow-md);
+            padding: 0.6rem 0;
+        }
+        .navbar-radar .navbar-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            letter-spacing: 0.02em;
+        }
+        .navbar-radar .navbar-brand .brand-icon {
+            color: var(--color-gold);
+            font-size: 1.4rem;
+            filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5));
+        }
+        .navbar-radar .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 500;
+            font-size: 0.92rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .navbar-radar .nav-link:hover,
+        .navbar-radar .nav-link.active {
+            color: #fff;
+            background: rgba(59, 130, 246, 0.15);
+        }
+        .navbar-radar .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
+            background: var(--color-accent);
+            border-radius: 2px;
+        }
+        .navbar-radar .navbar-toggler {
+            border-color: rgba(255,255,255,0.2);
+        }
+        .navbar-radar .navbar-toggler-icon {
+            filter: invert(1);
+        }
+
+        /* ── Main Content ───────────────────────────────────── */
+        main {
+            flex: 1;
+            padding-top: 1.5rem;
+            padding-bottom: 3rem;
+        }
+
+        /* ── Cards ──────────────────────────────────────────── */
+        .card {
+            border: none;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.25s ease, transform 0.25s ease;
+            overflow: hidden;
+        }
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        /* ── Badges ─────────────────────────────────────────── */
+        .badge-accent {
+            background: var(--color-accent);
+            color: #fff;
+            font-weight: 500;
+        }
+        .badge-gold {
+            background: var(--color-gold);
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+        .badge-outline {
+            background: transparent;
+            border: 1.5px solid var(--color-accent);
+            color: var(--color-accent);
+            font-weight: 500;
+        }
+
+        /* ── Buttons ────────────────────────────────────────── */
+        .btn-accent {
+            background: var(--color-accent);
+            color: #fff;
+            border: none;
+            font-weight: 500;
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s ease;
+        }
+        .btn-accent:hover {
+            background: var(--color-accent-dark);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+        }
+        .btn-outline-accent {
+            background: transparent;
+            color: var(--color-accent);
+            border: 1.5px solid var(--color-accent);
+            font-weight: 500;
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 1.25rem;
+            transition: all 0.2s ease;
+        }
+        .btn-outline-accent:hover {
+            background: var(--color-accent);
+            color: #fff;
+        }
+
+        /* ── Section Headers ────────────────────────────────── */
+        .section-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-header .bi {
+            color: var(--color-accent);
+        }
+
+        /* ── Footer ─────────────────────────────────────────── */
+        .footer-radar {
+            background: var(--color-primary);
+            color: rgba(255, 255, 255, 0.5);
+            padding: 1.25rem 0;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: auto;
+        }
+        .footer-radar a {
+            color: var(--color-accent-light);
+            text-decoration: none;
+        }
+        .footer-radar a:hover {
+            color: var(--color-gold);
+        }
+
+        /* ── Scrollbar ──────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--color-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--color-primary-lighter); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
+
+        /* ── Utilities ──────────────────────────────────────── */
+        .text-muted-custom { color: var(--color-text-muted) !important; }
+        .bg-primary-gradient {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+        }
+        .truncate-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .truncate-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+<body>
+
+    <!-- ── Navbar ──────────────────────────────────────────────────── -->
+    <nav class="navbar navbar-expand-lg navbar-radar sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-broadcast brand-icon"></i>
+                AI趋势雷达
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarMain" aria-controls="navbarMain"
+                    aria-expanded="false" aria-label="导航切换">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav ms-auto gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}"
+                           href="/">
+                            <i class="bi bi-house-door me-1"></i>首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and 'article' in request.endpoint %}active{% endif %}"
+                           href="/articles">
+                            <i class="bi bi-newspaper me-1"></i>资讯
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and 'knowledge' in request.endpoint %}active{% endif %}"
+                           href="/knowledge">
+                            <i class="bi bi-book me-1"></i>知识库
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/">
+                            <i class="bi bi-gear me-1"></i>管理后台
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── Main Content ────────────────────────────────────────────── -->
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mt-2" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ── Footer ──────────────────────────────────────────────────── -->
+    <footer class="footer-radar">
+        <div class="container">
+            <span>&copy; 2025 AI趋势雷达 &mdash; 追踪前沿AI动态，洞察技术趋势</span>
+        </div>
+    </footer>
+
+    <!-- ── Scripts ─────────────────────────────────────────────────── -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

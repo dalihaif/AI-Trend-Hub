@@ -1,0 +1,416 @@
+{% extends "admin_base.html" %}
+{% block title %}知识库管理{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-bs5.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h4 class="text-navy fw-bold mb-1">知识库管理</h4>
+        <p class="text-muted mb-0" style="font-size:.875rem;">共 {{ items|length }} 条知识库条目</p>
+    </div>
+    <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#kiModal" onclick="openAddModal()">
+        <i class="bi bi-plus-lg me-1"></i> 添加条目
+    </button>
+</div>
+
+<!-- Batch Action Bar -->
+<div class="batch-bar" id="batchBar">
+    <span><i class="bi bi-check2-square me-1"></i> 已选 <strong id="selectedCount">0</strong> 项</span>
+    <div class="ms-auto d-flex gap-2">
+        <button class="btn btn-sm btn-gold" data-bs-toggle="modal" data-bs-target="#batchKiCatModal">
+            <i class="bi bi-tags me-1"></i> 批量修改分类
+        </button>
+        <button class="btn btn-sm btn-outline-light" onclick="batchKiSuggest()">
+            <i class="bi bi-magic me-1"></i> 批量智能归类
+        </button>
+        <button class="btn btn-sm btn-outline-danger" onclick="batchKiPin(true)">
+            <i class="bi bi-pin-angle me-1"></i> 批量置顶
+        </button>
+        <button class="btn btn-sm btn-outline-danger" onclick="batchKiPin(false)">
+            <i class="bi bi-pin-angle-fill me-1"></i> 取消置顶
+        </button>
+    </div>
+</div>
+
+<!-- Knowledge Table -->
+<div class="admin-table">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width:40px;">
+                        <input class="form-check-input" type="checkbox" id="checkAll" onchange="toggleAll(this)">
+                    </th>
+                    <th style="width:50px;">ID</th>
+                    <th>标题</th>
+                    <th>分类</th>
+                    <th>来源</th>
+                    <th>标签</th>
+                    <th style="width:60px;">置顶</th>
+                    <th style="width:100px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ki in items %}
+                <tr id="ki-{{ ki.id }}">
+                    <td>
+                        <input class="form-check-input ki-check" type="checkbox" value="{{ ki.id }}"
+                               onchange="updateBtns()">
+                    </td>
+                    <td class="text-muted" style="font-size:.8rem;">{{ ki.id }}</td>
+                    <td>
+                        <span class="fw-semibold text-navy" style="font-size:.875rem;">
+                            {% if ki.is_pinned %}<i class="bi bi-pin-angle-fill text-gold me-1"></i>{% endif %}
+                            {{ ki.title }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if ki.category %}
+                            <span class="badge badge-category">{{ ki.category.name }}</span>
+                        {% else %}
+                            <span class="text-muted" style="font-size:.8rem;">未分类</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:.8rem;">
+                        {% if ki.source_url %}
+                            <a href="{{ ki.source_url }}" target="_blank" class="text-decoration-none">
+                                {{ ki.source or '链接' }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">{{ ki.source or '-' }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:.8rem;max-width:180px;">
+                        {% if ki.tags %}
+                            {% for tag in ki.tags.split(',')[:3] %}
+                                <span class="badge bg-light text-dark me-1" style="font-size:.7rem;">{{ tag.strip() }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ki.is_pinned %}
+                            <i class="bi bi-pin-angle-fill text-gold"></i>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-accent" onclick="editKi({{ ki.id }})" title="编辑">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteKi({{ ki.id }})" title="删除">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">暂无知识库条目，点击右上角添加</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Knowledge Item Modal -->
+<div class="modal fade" id="kiModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold" id="kiModalTitle">
+                    <i class="bi bi-plus-circle me-2"></i>添加知识库条目
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="kiId">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">标题 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="kiTitle" placeholder="条目标题">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">分类</label>
+                        <select class="form-select" id="kiCategory">
+                            <option value="">-- 选择分类 --</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% for child in cat.children|sort(attribute='sort_order') %}
+                                    <option value="{{ child.id }}">&nbsp;&nbsp;{{ child.name }}</option>
+                                {% endfor %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:.85rem;">内容</label>
+                    <textarea id="kiContent"></textarea>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">来源</label>
+                        <input type="text" class="form-control" id="kiSource" placeholder="来源名称">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">来源链接</label>
+                        <input type="text" class="form-control" id="kiSourceUrl" placeholder="https://...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" style="font-size:.85rem;">标签</label>
+                        <input type="text" class="form-control" id="kiTags" placeholder="逗号分隔">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-accent btn-sm" onclick="saveKi()">
+                    <i class="bi bi-check-lg me-1"></i>保存
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Category Modal -->
+<div class="modal fade" id="batchKiCatModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold"><i class="bi bi-tags me-2"></i>批量修改分类</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label fw-semibold" style="font-size:.85rem;">目标分类</label>
+                <select class="form-select" id="batchKiCatId">
+                    <option value="">-- 选择分类 --</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% for child in cat.children|sort(attribute='sort_order') %}
+                            <option value="{{ child.id }}">&nbsp;&nbsp;{{ child.name }}</option>
+                        {% endfor %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-accent btn-sm" onclick="batchKiCategory()">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/summernote-bs5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.9.1/dist/lang/summernote-zh-CN.min.js"></script>
+<script>
+// ===== Initialize Summernote =====
+$(document).ready(function() {
+    $('#kiContent').summernote({
+        height: 300,
+        lang: 'zh-CN',
+        placeholder: '输入知识库内容...',
+        toolbar: [
+            ['style', ['style']],
+            ['font', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
+            ['fontname', ['fontname']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['table', ['table']],
+            ['insert', ['link', 'picture', 'hr']],
+            ['view', ['fullscreen', 'codeview', 'help']]
+        ]
+    });
+});
+
+const kiModal = new bootstrap.Modal(document.getElementById('kiModal'));
+
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.ki-check:checked')).map(cb => parseInt(cb.value));
+}
+
+function updateBtns() {
+    const ids = getSelectedIds();
+    const bar = document.getElementById('batchBar');
+    const cnt = document.getElementById('selectedCount');
+    cnt.textContent = ids.length;
+    if (ids.length > 0) {
+        bar.classList.add('show');
+    } else {
+        bar.classList.remove('show');
+    }
+    const all = document.querySelectorAll('.ki-check');
+    const checkAll = document.getElementById('checkAll');
+    checkAll.checked = all.length > 0 && ids.length === all.length;
+}
+
+function toggleAll(master) {
+    document.querySelectorAll('.ki-check').forEach(cb => {
+        cb.checked = master.checked;
+    });
+    updateBtns();
+}
+
+// ===== Add =====
+function openAddModal() {
+    document.getElementById('kiModalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>添加知识库条目';
+    document.getElementById('kiId').value = '';
+    document.getElementById('kiTitle').value = '';
+    document.getElementById('kiCategory').value = '';
+    $('#kiContent').summernote('code', '');
+    document.getElementById('kiSource').value = '';
+    document.getElementById('kiSourceUrl').value = '';
+    document.getElementById('kiTags').value = '';
+}
+
+// ===== Edit =====
+function editKi(id) {
+    fetch('/admin/api/knowledge/' + id)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return alert('加载失败');
+            const item = data.item;
+            document.getElementById('kiModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>编辑知识库条目';
+            document.getElementById('kiId').value = item.id;
+            document.getElementById('kiTitle').value = item.title || '';
+            document.getElementById('kiCategory').value = item.category_id || '';
+            // CRITICAL: use summernote('code', content) to set HTML content
+            $('#kiContent').summernote('code', item.content || '');
+            document.getElementById('kiSource').value = item.source || '';
+            document.getElementById('kiSourceUrl').value = item.source_url || '';
+            document.getElementById('kiTags').value = item.tags || '';
+            kiModal.show();
+        })
+        .catch(err => alert('请求异常: ' + err.message));
+}
+
+// ===== Save (Create or Update) =====
+function saveKi() {
+    const id = document.getElementById('kiId').value;
+    const title = document.getElementById('kiTitle').value;
+    if (!title) return alert('请输入标题');
+
+    const payload = {
+        title: title,
+        category_id: document.getElementById('kiCategory').value ? parseInt(document.getElementById('kiCategory').value) : null,
+        // CRITICAL: use .summernote('code') to GET HTML content
+        content: $('#kiContent').summernote('code'),
+        source: document.getElementById('kiSource').value,
+        source_url: document.getElementById('kiSourceUrl').value,
+        tags: document.getElementById('kiTags').value,
+    };
+
+    const isEdit = id !== '';
+    const url = isEdit ? '/admin/api/knowledge/' + id : '/admin/api/knowledge';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            kiModal.hide();
+            location.reload();
+        } else {
+            alert('保存失败');
+        }
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+
+// ===== Delete =====
+function deleteKi(id) {
+    if (!confirm('确定删除该知识库条目？')) return;
+    fetch('/admin/api/knowledge/' + id, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('ki-' + id).remove();
+            } else {
+                alert('删除失败');
+            }
+        })
+        .catch(err => alert('请求异常: ' + err.message));
+}
+
+// ===== Batch: Category =====
+function batchKiCategory() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return alert('请先选择条目');
+    const catId = document.getElementById('batchKiCatId').value;
+    if (!catId) return alert('请选择分类');
+
+    fetch('/admin/api/knowledge/batch', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids, updates: { category_id: parseInt(catId) } })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('已更新 ' + data.updated + ' 条分类');
+            bootstrap.Modal.getInstance(document.getElementById('batchKiCatModal')).hide();
+            location.reload();
+        } else alert('操作失败');
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+
+// ===== Batch: Pin/Unpin =====
+function batchKiPin(pinned) {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return alert('请先选择条目');
+
+    fetch('/admin/api/knowledge/batch', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids, updates: { is_pinned: pinned } })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert((pinned ? '已置顶 ' : '已取消置顶 ') + data.updated + ' 条');
+            location.reload();
+        } else alert('操作失败');
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+
+// ===== Batch: AI Suggest =====
+function batchKiSuggest() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return alert('请先选择条目');
+
+    fetch('/admin/api/knowledge/batch-suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success && data.suggestions.length > 0) {
+            let msg = '智能归类建议:\n\n';
+            data.suggestions.forEach(s => {
+                msg += s.title.substring(0, 30) + ' → ' + s.suggested + '\n';
+            });
+            alert(msg);
+        } else {
+            alert('未获取到分类建议');
+        }
+    })
+    .catch(err => alert('请求异常: ' + err.message));
+}
+</script>
+{% endblock %}

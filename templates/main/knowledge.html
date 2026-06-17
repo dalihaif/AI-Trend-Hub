@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}知识库 - AI趋势雷达{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex align-items-center mb-4">
+        <i class="bi bi-collection fs-2 text-accent me-3"></i>
+        <div>
+            <h2 class="mb-0 fw-bold">知识库</h2>
+            <small class="text-muted">精选整理的AI领域知识条目</small>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for item in cat_data %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width:48px;height:48px;background:linear-gradient(135deg,#3B82F6,#1E40AF);">
+                            <i class="bi {{ item.cat.icon }} text-white fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">{{ item.cat.name }}</h5>
+                            <span class="badge bg-accent rounded-pill">{{ item.count }} 条</span>
+                        </div>
+                    </div>
+                    {% if item.cat.description %}
+                    <p class="text-muted small mb-3">{{ item.cat.description }}</p>
+                    {% endif %}
+
+                    {% if item.cat.children %}
+                    <div class="mb-3">
+                        {% for child in item.cat.children %}
+                        <span class="badge bg-light text-dark me-1 mb-1" style="font-size:0.75rem;">{{ child.name }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <a href="#cat-{{ item.cat.id }}" class="btn btn-sm btn-outline-accent w-100" onclick="showCategoryItems({{ item.cat.id }})">
+                        <i class="bi bi-folder2-open me-1"></i> 查看条目
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 知识条目列表区域 -->
+    <div id="items-section" class="mt-5" style="display:none;">
+        <div class="d-flex align-items-center mb-3">
+            <h4 class="fw-bold mb-0" id="cat-title"></h4>
+            <button class="btn btn-sm btn-outline-secondary ms-3" onclick="document.getElementById('items-section').style.display='none'">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div id="items-list" class="row g-3"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showCategoryItems(catId) {
+    fetch('/knowledge?cat_id=' + catId)
+        .then(r => r.text())
+        .then(html => {
+            // Just scroll to items section for now
+            var section = document.getElementById('items-section');
+            section.style.display = 'block';
+            section.scrollIntoView({behavior: 'smooth'});
+        });
+}
+</script>
+{% endblock %}
